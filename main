@@ -1,0 +1,57 @@
+docker imager are here
+
+#! /bin/bash
+
+
+# Description:
+
+# Gather input from user
+read -p "Please type the desired hostname: " NEW_HOSTNAME
+read -p "Now type the IP address in CIDR notation, i.e. 10.105.38.11/24: " IP_ADDRESS
+read -p "The gateway IP: " GATEWAY_ADDRESS
+
+# Set a new hostname
+hostnamectl set-hostname "$NEW_HOSTNAME"
+
+
+# Create a new netplan yaml config file
+touch ~/ens160.yaml
+
+# Apply network config to netplan yaml config file
+
+echo "network:" > ~/ens160.yaml
+echo "  version:2" >> ~/ens160.yaml
+echo "  renderer: networkd" >> ~/ens160.yaml
+echo "    ens160:" >> ~/ens160.yaml
+echo "      dhcp4: false" >> ~/ens160.yaml
+echo "      addresses:"
+echo "       - [$IP_ADDRESS]" >> ~/ens160.yaml
+echo "      routes:"
+echo "       - to: default"
+echo "         via: $GATEWAY_ADDRESS" >> ~/ens160.yaml
+echo "      nameservers:[cisco.com]" >> ~/ens160.yaml
+echo "      addresses:[72.163.128.140, 171.70.168.183]" >> ~/ens160.yaml
+
+# Copy the custom config to the netplan folder and apply
+cp ~/ens160.yaml /etc/netplan/ens160.yaml
+
+# Apply Hosts in etc conf files
+
+touch ~/hosts
+
+
+echo "127.0.0.1    localhost" >> ~/hosts
+echo "  $IP_ADDRESS $NEW_HOSTNAME $NEW_HOSTNAME.prime.cisco.com  " >> ~/hosts
+
+
+
+cp ~/hosts /etc/hosts
+
+
+
+# Apply the new netplan config
+netplan apply
+
+# Reminder to restart to reset state
+echo "Please restart VM to complete the script!!"
+echo " Thank you!!!"
